@@ -16,16 +16,19 @@ namespace rabbitmq_rpc_server
     {
         static void Main(string[] args)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            var factory = new ConnectionFactory() { HostName = "localhost" }; //Detalhes da conexão.
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
+                //Inicializa a escuta na porta RPC, aguardando um pacote com a mensagem dentro.
                 var consumer = InitializerConsumer(channel, nameof(Order));
 
+                //Adiciona ao evento que executa quando disparado.
                 consumer.Received += (model, ea) =>
                 {
                     try
                     {
+                        //Abaixo serializa os dados da mensagem.
                         var incommingMessage = Encoding.UTF8.GetString(ea.Body.ToArray());
                         Console.WriteLine($"{DateTime.Now:o} Incomming => {incommingMessage}");
 
@@ -35,6 +38,7 @@ namespace rabbitmq_rpc_server
                         var replyMessage = JsonSerializer.Serialize(order);
                         Console.WriteLine($"{DateTime.Now:o} Reply => {replyMessage}");
 
+                        //Envia o pacote solicitado.
                         SendReplyMessage(replyMessage, channel, ea);
                     }catch
                     {
@@ -70,11 +74,14 @@ namespace rabbitmq_rpc_server
 
         private static EventingBasicConsumer InitializerConsumer(IModel channel, string queueName)
         {
+            //Abre a fila
             channel.QueueDeclare(queue: queueName, durable: false,
                 exclusive: false, autoDelete: false, arguments: null);
 
+            //Inicio, tamanho, posiçoes na fila
             channel.BasicQos(0, 1, false);
 
+            //Cria o objeto do tipo EventingBasicConsumer, que será enviado ao listener, provavelmente.
             var consumer = new EventingBasicConsumer(channel);
             channel.BasicConsume(queue: queueName,
                 autoAck: false, consumer: consumer);

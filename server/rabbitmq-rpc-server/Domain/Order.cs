@@ -4,6 +4,7 @@ using System.Text;
 
 namespace rabbitmq_rpc_server.Domain
 {
+    //Entidade
     public sealed class Order
     {
         public long Id { get; set; }

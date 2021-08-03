@@ -11,19 +11,20 @@ namespace rabbitmq_rpc_client
         static void Main(string[] args)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
+            using (var connection = factory.CreateConnection()) //Conecta
+            using (var channel = connection.CreateModel()) //Alimenta as propriedades do cliente queque
             {
                 var replayQueue = $"{nameof(Order)}_return";
                 var correlationId = Guid.NewGuid().ToString();
 
                 channel.QueueDeclare(queue: replayQueue, durable: false,
-                    exclusive: false, autoDelete: false, arguments: null);
+                    exclusive: false, autoDelete: false, arguments: null); //Prioridade da mensagem na fila
                 channel.QueueDeclare(queue: nameof(Order), durable: false,
-                    exclusive: false, autoDelete: false, arguments: null);
+                    exclusive: false, autoDelete: false, arguments: null); //O Objeto dentro da fila
 
-                var consumer = new EventingBasicConsumer(channel);
+                var consumer = new EventingBasicConsumer(channel); //Abre um listener
 
+                //Adição de codigo pra trabalhar a mensagem no listener
                 consumer.Received += (model, ea) =>
                 {
                     if (correlationId == ea.BasicProperties.CorrelationId)
@@ -58,7 +59,7 @@ namespace rabbitmq_rpc_client
                     var body = Encoding.UTF8.GetBytes(message);
 
                     channel.BasicPublish(exchange: "",
-                        routingKey: nameof(Order), basicProperties: pros, body: body);
+                        routingKey: nameof(Order), basicProperties: pros, body: body); //Adiciona mensagem na fila do servidor.
 
                     Console.WriteLine($"Published: {message}\n\n");
                     Console.ReadKey();

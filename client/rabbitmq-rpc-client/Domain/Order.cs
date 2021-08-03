@@ -5,6 +5,7 @@ using System.Text;
 
 namespace rabbitmq_rpc_client
 {
+    //Entidade de uma ordem de compra
     public sealed class Order
     {
         public long Id { get; set; }
@@ -12,6 +13,7 @@ namespace rabbitmq_rpc_client
         public string Status => OrderStatus.ToString();
         private OrderStatus OrderStatus { get; set; }
 
+        //Preenche o construtuor com dados basicos.
         public Order(decimal amount)
         {
             Id = DateTime.Now.Ticks;

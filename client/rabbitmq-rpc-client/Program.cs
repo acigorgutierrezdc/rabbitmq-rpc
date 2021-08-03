@@ -10,7 +10,7 @@ namespace rabbitmq_rpc_client
     {
         static void Main(string[] args)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            var factory = new ConnectionFactory() { HostName = "localhost" }; //Nesse factory que entra configur do server.
             using (var connection = factory.CreateConnection()) //Conecta
             using (var channel = connection.CreateModel()) //Alimenta as propriedades do cliente queque
             {
@@ -27,31 +27,36 @@ namespace rabbitmq_rpc_client
                 //Adição de codigo pra trabalhar a mensagem no listener
                 consumer.Received += (model, ea) =>
                 {
+                    //Se o pacote estiver aberto esperando a mensagem.
                     if (correlationId == ea.BasicProperties.CorrelationId)
                     {
+                        //Prepara a mensagem.
                         var body = ea.Body.ToArray();
                         var message = Encoding.UTF8.GetString(body);
                         Console.WriteLine($"Received {message}");
                         return;
                     }
 
-
+                    //Caso a mensagem não seja 1-1 com a da queue, ele descarta.
                     Console.WriteLine(
                         $"Menssagem descatada, identificadores de coreção inválidos, "
                             + $"original {correlationId} recebido {ea.BasicProperties.CorrelationId}");
                 };
 
+                //Consome algo esperando um ok, provavelmente do canal, exchange, etc.
                 channel.BasicConsume(queue: replayQueue, autoAck: true, consumer: consumer);
 
+                //Starta o cabeçalho do pacote.
                 var pros = channel.CreateBasicProperties();
-
                 pros.CorrelationId = correlationId;
                 pros.ReplyTo = replayQueue;
 
+                //Fica se comunicando em loop, adicionando pedidos na fila, desde que tenha uma ordem/pacote em aberto.
                 while (true)
                 {
                     Console.WriteLine("Informe o valor do pedido: ");
 
+                    //Estrutura os dados para o pacote que irá na fila.
                     var amount = decimal.Parse(Console.ReadLine());
 
                     var order = new Order(amount);

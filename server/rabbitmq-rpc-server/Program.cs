@@ -64,9 +64,11 @@ namespace rabbitmq_rpc_server
 
             var responseBytes = Encoding.UTF8.GetBytes(replyMessage);
 
+            //Abre o canal na exchange.
             channel.BasicPublish(exchange: "", routingKey: props.ReplyTo,
                 basicProperties: replyProps, body: responseBytes);
 
+            //Acknowledge (Torna a mensagem conhecida no canal.
             channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
         }
 
